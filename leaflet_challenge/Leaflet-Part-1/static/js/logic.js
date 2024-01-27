@@ -1,31 +1,6 @@
-// Store our API endpoint as queryUrl.
-let queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
-
-// Perform a GET request to the query URL/
-d3.json(queryUrl).then(function (data) {
-  // Once we get a response, send the data.features object to the createFeatures function.
-  createFeatures(data.features);
-});
-
-function createFeatures(earthquakeData) {
-
-  // Give each feature a popup that describes the place and time of the earthquake.
-  function onEachFeature(feature, layer) {
-    layer.bindPopup(`<h3>${feature.properties.place}</h3><hr><p>${new Date(feature.properties.time)}</p>`);
-  }
-
-  // Create a GeoJSON layer that contains the features array on the earthquakeData object.
-  // Run the onEachFeature function once for each piece of data in the array.
-  let earthquakes = L.geoJSON(earthquakeData, {
-    onEachFeature: onEachFeature
-  });
-
-  // Send our earthquakes layer to the createMap function/
-  createMap(earthquakes);
-}
 function createMap(earthquakes) {
 
-    // Create the base layers.
+    // Create the base layers //
     let street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     })
@@ -34,36 +9,84 @@ function createMap(earthquakes) {
       attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
     });
   
-    // Create a baseMaps object.
+    // Create a baseMaps object //
     let baseMaps = {
       "Street Map": street,
       "Topographic Map": topo
     };
   
-    // Create an overlay object to hold our overlay.
+    // Create the earthquakes overlay using the layer //
     let overlays = {
       Earthquakes: earthquakes
     };
   
-    // Create our map, giving it the streetmap and earthquakes layers to display on load.
+    // Create the map with initial layers //
     let myMap = L.map("map", {
       center: [
-        37.09, -95.71
+        40.806862, -96.681679
       ],
-      zoom: 5,
+      zoom: 4,
       layers: [street, earthquakes]
     });
-}  
-// Create a legend to display information about our map.
-let info = L.control({
-  position: "bottomright"
-});
 
-// When the layer control is added, insert a div with the class of "legend".
-info.onAdd = function() {
-  let div = L.DomUtil.create("div", "legend");
-  return div;
-};
-// Add the info legend to the map.
-info.addTo(map);// Create a control for our layers, and add our overlays to it.
-L.control.layers(null, overlays).addTo(map);
+
+    // Create a control for our layers, and add overlays //
+    L.control.layers(null, overlays).addTo(myMap);
+
+    // Create a legend and place it in the bottom right of the map //
+    let info = L.control({
+    position: "bottomright"
+    });
+  
+     // When the layer control is added, insert a div with the class of "legend" //
+    info.onAdd = function() {
+    let div = L.DomUtil.create("div", "legend");
+    return div;
+    };
+    // Add the legend to the map //
+    info.addTo(myMap);
+}  
+
+function createMarkers(response) {
+
+    // Pull the "features" property from response //
+    let markerFeatures = response.features;
+  
+    // Initialize an array to hold markers //
+    let eqMarkers = [];
+  
+    // Loop through the coordinates array //
+    for (let i = 0; i < markerFeatures.length; i++) {
+        let instance = markerFeatures[i];
+        
+        // Set icon size & color based on magnitude and depth, respectively //
+        let mag = instance.properties.mag;
+        console.log(mag);
+        let depth = instance.geometry.coordinates[2];
+        console.log(depth);
+
+
+
+        let myIcon = L.icon({
+            iconUrl: '',
+            iconSize: ,
+        });
+
+        // For each instance, create a marker and bind a popup with the location, instance magnitude, and instance depth //
+        let eqMarker = L.marker([instance.geometry.coordinates[1], instance.geometry.coordinates[0]], {icon: myIcon})
+            .bindPopup("<h3>" + instance.properties.place + "<h3><h4>Magnitude: " + mag + "<br>Depth: " + depth + " km</h4>");
+  
+        // Add the marker to the eqMarkers array.
+        eqMarkers.push(eqMarker);
+        console.log(eqMarker);
+    }
+  
+    // Create a layer group from the array and pass it to the createMap function //
+    createMap(L.layerGroup(eqMarkers));
+}
+  
+// Store our API endpoint as queryUrl //
+let queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson";
+
+// Perform an API call to get the earthquake data. Call createMarkers when it completes //
+d3.json(queryUrl).then(createMarkers);
