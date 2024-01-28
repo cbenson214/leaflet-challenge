@@ -5,3 +5,6 @@ Description of "logic.js" code:
 * Setup "depthColor" function, which assigns colors to future markers and legend lines based on a depth value.
 * Create the circle markers with the "createMarkers" function. This function passes through the geoJSON data and runs a loop through it in order to create an array of marker points and information of interest (depth, maginitude). Also inside the loop I have an options object that calls the depthColor function and assigns a color to each marker. The final part of the "createMarkers" function calls the "createMap" function using the new marker array.
 * Finally, the API call is performed and once complete, the "createMarkers" function is run.
+
+Direct link to index.html:
+https://cbenson214.github.io/
