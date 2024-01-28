@@ -26,26 +26,48 @@ function createMap(earthquakes) {
         40.806862, -96.681679
       ],
       zoom: 4,
-      layers: [street, earthquakes]
+      layers: [topo, earthquakes]
     });
 
 
     // Create a control for our layers, and add overlays //
-    L.control.layers(null, overlays).addTo(myMap);
+    L.control.layers(baseMaps, overlays).addTo(myMap);
 
     // Create a legend and place it in the bottom right of the map //
-    let info = L.control({
+    var legend = L.control({
     position: "bottomright"
     });
   
-     // When the layer control is added, insert a div with the class of "legend" //
-    info.onAdd = function() {
-    let div = L.DomUtil.create("div", "legend");
-    return div;
+    // When the legend is added, insert a div for it //
+    legend.onAdd = function(myMap) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            depth = [-10, 10, 30, 50, 70, 90],
+            labels = [];
+
+        div.innerHTML += "<h3 style='text-align: center'>Depth</h3>"
+
+        for (let i =0; i < depth.length; i++) {
+            div.innerHTML += 
+                '<i style="background:' + depthColor(depth[i] + 1) + '"></i> ' +
+                depth[i] + (depth[i + 1] ? '&ndash;' + depth[i + 1] + '<br>' : '+');
+        }
+        
+        return div;
     };
+
     // Add the legend to the map //
-    info.addTo(myMap);
-}  
+    legend.addTo(myMap);
+};
+
+// Determine marker color by depth //
+function depthColor(depth) {
+    if (depth < 10) return "green";
+    else if (depth < 30) return "greenyellow";
+    else if (depth < 50) return "yellow";
+    else if (depth < 70) return "orange";
+    else if (depth < 90) return "orangered";
+    else return "red";
+};
 
 function createMarkers(response) {
 
@@ -65,15 +87,17 @@ function createMarkers(response) {
         let depth = instance.geometry.coordinates[2];
         console.log(depth);
 
-
-
-        let myIcon = L.icon({
-            iconUrl: '',
-            iconSize: ,
-        });
+        let options = {
+            radius: mag*2,
+            fillColor: depthColor(depth),
+            color: 'black',
+            weight: .3,
+            opacity: 1,
+            fillOpacity: .66            
+        };
 
         // For each instance, create a marker and bind a popup with the location, instance magnitude, and instance depth //
-        let eqMarker = L.marker([instance.geometry.coordinates[1], instance.geometry.coordinates[0]], {icon: myIcon})
+        let eqMarker = L.circleMarker([instance.geometry.coordinates[1], instance.geometry.coordinates[0]], options)
             .bindPopup("<h3>" + instance.properties.place + "<h3><h4>Magnitude: " + mag + "<br>Depth: " + depth + " km</h4>");
   
         // Add the marker to the eqMarkers array.
